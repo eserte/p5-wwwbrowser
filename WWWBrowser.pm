@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.9 2001/10/22 14:25:46 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.10 2001/10/22 14:31:10 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
@@ -17,11 +17,8 @@ package WWWBrowser;
 use strict;
 use vars qw(@unix_browsers $VERSION $initialized $os);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.9 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.10 $ =~ /(\d+)\.(\d+)/);
 
-# XXX Hmmm, kfmclient lädt kfm, und das stellt gleich die KDE-Icons
-# auf dem Desktop dar, auch wenn KDE gar nicht läuft. Trotzdem ist
-# kfm wahrscheinlich billiger als netscape.
 @unix_browsers = qw(konqueror netscape Netscape kfmclient
 		    dillo w3m lynx
 		    mosaic Mosaic
@@ -88,22 +85,27 @@ sub start_browser {
 	    $url =~ /^file:/ && $url !~ m|file://|) {
 	    $url =~ s|file:/|file://localhost/|;
 	} elsif ($browser eq 'kfmclient') {
+	    # kfmclient loads kfm, which loads and displays all KDE icons
+	    # on the desktop, even if KDE is not running at all.
 	    exec_bg("kfmclient", "openURL", $url);
 	    return 1 if (!$?)
 	} elsif ($browser eq 'netscape') {
 	    if ($os eq 'unix') {
-		if (-l "$ENV{HOME}/.netscape/lock") {
-		    # XXX check whether netscape stills lives
-		    # with kill -$$
-# another argument to openURL: create new window
-		    exec_bg("netscape", "-remote", "openURL($url)");
-# further options: mailto(to-adresses)
-		    # XXX check return code?
-		    return 1;
-		} else {
-		    exec_bg("netscape", $url);
-		    return 1;
+		my $lockfile = "$ENV{HOME}/.netscape/lock";
+		if (-l $lockfile) {
+		    my($host,$pid) = readlink($lockfile) =~ /^(.*):(\d+)$/;
+		    # XXX check $host
+		    # Check whether Netscape stills lives:
+		    if (defined $pid && kill 0 => $pid) {
+			# XXX another argument to openURL: create new window
+			exec_bg("netscape", "-remote", "openURL($url)");
+		        # XXX further options: mailto(to-adresses)
+			# XXX check return code?
+			return 1;
+		    }
 		}
+		exec_bg("netscape", $url);
+		return 1;
 	    }
 	} else {
 	    exec_bg($browser, $url);
