@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.19 2002/10/12 16:37:07 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.20 2002/10/12 17:01:35 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
@@ -18,7 +18,7 @@ package WWWBrowser;
 use strict;
 use vars qw(@unix_browsers $VERSION $initialized $os $fork);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.19 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.20 $ =~ /(\d+)\.(\d+)/);
 
 @unix_browsers = qw(_default_gnome _default_kde
 		    mozilla galeon konqueror netscape Netscape kfmclient
@@ -203,7 +203,15 @@ sub open_in_mozilla {
     my $url = shift;
     my(%args) = @_;
     if (is_in_path("mozilla")) {
-	system("mozilla", "-remote", "openURL($url)");
+	if ($args{-oldwindow}) {
+	    system("mozilla", "-remote", "openURL($url)");
+	} else {
+	    system("mozilla", "-remote", "openURL($url,new-tab)");
+	}
+	return 1 if ($?/256 == 0);
+
+	# otherwise start a new mozilla process
+	exec_bg("mozilla", $url);
 	return 1; # if ($?/256 == 0);
     }
     0;
