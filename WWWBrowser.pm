@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 1.3 1999/03/13 18:55:34 eserte Exp $
+# $Id: WWWBrowser.pm,v 1.4 1999/06/29 00:10:29 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999 Slaven Rezic. All rights reserved.
@@ -27,8 +27,6 @@ sub start_browser {
 
     if ($main::os eq 'win') {
 	require Win32Util;
-	 # HTML-Viewer funktioniert auf Dateien, nicht auf URLs!
-	$url =~ s/^file://;
 	if (!Win32Util::start_html_viewer($url)) {
 	    status_message("Es wurde kein HTML-Viewer gefunden.",
 			   "err");
