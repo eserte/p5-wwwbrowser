@@ -1,0 +1,16 @@
+WWWBrowser.pm
+
+Start a WWW browser in a platform-independent manner.
+
+Installation:
+
+	perl Makefile.PL
+	make all test install
+
+
+There is also an script included:
+
+	anybrowser http://anyurl
+
+Comments to: slaven.rezic@berlin.de
+
