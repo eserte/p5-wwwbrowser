@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.20 2002/10/12 17:01:35 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.21 2002/11/10 19:56:26 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
@@ -16,9 +16,10 @@
 package WWWBrowser;
 
 use strict;
-use vars qw(@unix_browsers $VERSION $initialized $os $fork);
+use vars qw(@unix_browsers $VERSION $initialized $os $fork
+	    $got_from_config $ignore_config);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.20 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.21 $ =~ /(\d+)\.(\d+)/);
 
 @unix_browsers = qw(_default_gnome _default_kde
 		    mozilla galeon konqueror netscape Netscape kfmclient
@@ -42,6 +43,7 @@ sub init {
 	}
 	$fork = 1;
 	$initialized++;
+	get_from_config();
     }
 }
 
@@ -261,6 +263,20 @@ sub _get_cmdline_for_url_from_Gnome {
     }
     $cmdline =~ s/%s/$url/g;
     $cmdline;
+}
+
+# XXX document get_from_config, $ignore_config, ~/.wwwbrowser
+sub get_from_config {
+    if (!$got_from_config && !$ignore_config && $ENV{HOME} && open(CFG, "$ENV{HOME}/.wwwbrowser")) {
+	my @browser;
+	while(<CFG>) {
+	    chomp;
+	    push @browser, $_;
+	}
+	close CFG;
+	$got_from_config++;
+	unshift @unix_browsers, @browser;
+    }
 }
 
 # REPO BEGIN
