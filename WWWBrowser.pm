@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.3 2000/07/22 20:00:00 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.4 2000/08/29 00:47:57 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999, 2000 Slaven Rezic. All rights reserved.
@@ -20,7 +20,9 @@ package WWWBrowser;
 # @INC muss für das Laden von Win32Util erweitert sein (nur Win32)
 
 use strict;
-use vars qw(@unix_browsers);
+use vars qw(@unix_browsers $VERSION);
+
+$VERSION = sprintf("%d.%02d", q$Revision: 2.4 $ =~ /(\d+)\.(\d+)/);
 
 # XXX Hmmm, kfmclient lädt kfm, und das stellt gleich die KDE-Icons
 # auf dem Desktop dar, auch wenn KDE gar nicht läuft. Trotzdem ist
