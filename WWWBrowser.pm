@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.2 2000/07/22 19:56:34 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.3 2000/07/22 20:00:00 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999, 2000 Slaven Rezic. All rights reserved.
@@ -131,6 +131,11 @@ sub is_in_path {
 return 1 if caller();
 
 package main;
+
+require Getopt::Long;
+my $browser;
+if (!Getopt::Long::GetOptions("-browser=s" => \$browser)) { die "usage!" }
+if ($browser) { unshift @WWWBrowser::unix_browsers, $browser }
 
 WWWBrowser::start_browser $ARGV[0];
 
