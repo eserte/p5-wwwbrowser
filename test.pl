@@ -19,8 +19,13 @@ print "ok 1\n";
 # of the test code):
 
 use Cwd qw(cwd);
+use Sys::Hostname qw(hostname);
 use File::Spec;
 
 if (!$ENV{BATCH}) {
     WWWBrowser::start_browser("file:" . File::Spec->catfile(cwd, "test.html"));
+}
+
+if (hostname eq 'vran.herceg.de') {
+    WWWBrowser::start_browser("www.herceg.de", -expandurl => 1);
 }
