@@ -2,15 +2,15 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.12 2001/11/17 12:08:17 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.13 2001/11/17 12:09:54 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
 # This package is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
-# Mail: eserte@cs.tu-berlin.de
-# WWW:  http://user.cs.tu-berlin.de/~eserte/
+# Mail: slaven.rezic@berlin.de
+# WWW:  http://www.rezic.de/eserte/
 #
 
 package WWWBrowser;
@@ -18,7 +18,7 @@ package WWWBrowser;
 use strict;
 use vars qw(@unix_browsers $VERSION $initialized $os $fork);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.12 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.13 $ =~ /(\d+)\.(\d+)/);
 
 @unix_browsers = qw(konqueror netscape Netscape kfmclient
 		    dillo w3m lynx
