@@ -1,7 +1,8 @@
+#!/usr/bin/env perl
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.10 2001/10/22 14:31:10 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.11 2001/11/14 09:04:17 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
@@ -17,7 +18,7 @@ package WWWBrowser;
 use strict;
 use vars qw(@unix_browsers $VERSION $initialized $os);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.10 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.11 $ =~ /(\d+)\.(\d+)/);
 
 @unix_browsers = qw(konqueror netscape Netscape kfmclient
 		    dillo w3m lynx
@@ -46,13 +47,17 @@ sub start_browser {
     my $url = shift;
 
     if ($os eq 'win') {
-	require Win32Util;
-	if (!Win32Util::start_html_viewer($url)) {
-	    status_message("Can't find HTML viewer.", "err");
-	    return 0;
-	} else {
-	    return 1;
+	if (!eval 'require Win32Util;
+	           Win32Util::start_html_viewer($url)') {
+	    # if this fails, just try to start a default viewer
+	    system($url);
+	    # otherwise croak
+	    if ($?/256 != 0) {
+		status_message("Can't find HTML viewer.", "err");
+		return 0;
+	    }
 	}
+	return 1;
     }
 
     foreach my $browser (@unix_browsers) {
@@ -125,8 +130,8 @@ sub open_in_konqueror {
 	system(qw/dcop konqueror KonquerorIface openBrowserWindow/, $url);
 	return 1 if ($?/256 == 0);
 	# otherwise start a new konqueror
-	system("konqueror", $url);
-	return 1 if ($?/256 == 0);
+	exec_bg("konqueror", $url);
+	return 1; # if ($?/256 == 0);
     }
     0;
 }
