@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.11 2001/11/14 09:04:17 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.12 2001/11/17 12:08:17 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
@@ -16,9 +16,9 @@
 package WWWBrowser;
 
 use strict;
-use vars qw(@unix_browsers $VERSION $initialized $os);
+use vars qw(@unix_browsers $VERSION $initialized $os $fork);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.11 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.12 $ =~ /(\d+)\.(\d+)/);
 
 @unix_browsers = qw(konqueror netscape Netscape kfmclient
 		    dillo w3m lynx
@@ -39,6 +39,7 @@ sub init {
 	} else {
 	    eval 'sub status_message { main::status_message(@_) }';
 	}
+	$fork = 1;
 	$initialized++;
     }
 }
@@ -140,14 +141,14 @@ sub exec_bg {
     my(@cmd) = @_;
     if ($os eq 'unix') {
 	eval {
-	    if (fork == 0) {
+	    if (!$fork || fork == 0) {
 		exec @cmd;
 		die "Can't exec @cmd: $!";
 	    }
 	};
     } else {
 	# XXX use Spawn
-	system(join(" ", @cmd) . "&");
+	system(join(" ", @cmd) . ($fork ? "&" : ""));
     }
 }
 
@@ -171,7 +172,9 @@ package main;
 
 require Getopt::Long;
 my $browser;
-if (!Getopt::Long::GetOptions("-browser=s" => \$browser)) { die "usage!" }
+if (!Getopt::Long::GetOptions("-browser=s" => \$browser,
+			      "-fork!" => \$WWWBrowser::fork,
+			     )) { die "usage!" }
 if ($browser) { unshift @WWWBrowser::unix_browsers, $browser }
 
 WWWBrowser::start_browser $ARGV[0];
