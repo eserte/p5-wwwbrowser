@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.16 2002/03/04 21:19:41 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.17 2002/08/22 12:02:32 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
@@ -18,9 +18,9 @@ package WWWBrowser;
 use strict;
 use vars qw(@unix_browsers $VERSION $initialized $os $fork);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.16 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.17 $ =~ /(\d+)\.(\d+)/);
 
-@unix_browsers = qw(konqueror netscape Netscape kfmclient
+@unix_browsers = qw(galeon konqueror netscape Netscape kfmclient
 		    dillo w3m lynx
 		    mosaic Mosaic
 		    chimera arena tkweb) if !@unix_browsers;
@@ -93,6 +93,8 @@ sub start_browser {
 	my $url = $url;
 	if ($browser eq 'konqueror') {
 	    return 1 if open_in_konqueror($url, %args);
+	} elsif ($browser eq 'galeon') {
+	    return 1 if open_in_galeon($url, %args);
 	} elsif ($browser =~ /^mosaic$/i &&
 	    $url =~ /^file:/ && $url !~ m|file://|) {
 	    $url =~ s|file:/|file://localhost/|;
@@ -160,6 +162,27 @@ sub open_in_konqueror {
 
 	# otherwise start a new konqueror
 	exec_bg("konqueror", $url);
+	return 1; # if ($?/256 == 0);
+    }
+    0;
+}
+
+sub open_in_galeon {
+    my $url = shift;
+    my(%args) = @_;
+    if (is_in_path("galeon")) {
+
+	# first try old window (if requested)
+	if ($args{-oldwindow}) {
+	    system("galeon", "-x", $url);
+	    return 1 if ($?/256 == 0);
+	}
+
+	system("galeon", "-n", $url);
+	return 1 if ($?/256 == 0);
+
+	# otherwise start a new galeon process
+	exec_bg("galeon", $url);
 	return 1; # if ($?/256 == 0);
     }
     0;
