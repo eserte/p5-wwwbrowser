@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.18 2002/09/03 06:33:09 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.19 2002/10/12 16:37:07 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
@@ -18,10 +18,10 @@ package WWWBrowser;
 use strict;
 use vars qw(@unix_browsers $VERSION $initialized $os $fork);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.18 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.19 $ =~ /(\d+)\.(\d+)/);
 
 @unix_browsers = qw(_default_gnome _default_kde
-		    galeon konqueror netscape Netscape kfmclient
+		    mozilla galeon konqueror netscape Netscape kfmclient
 		    dillo w3m lynx
 		    mosaic Mosaic
 		    chimera arena tkweb) if !@unix_browsers;
@@ -104,6 +104,8 @@ sub start_browser {
 	    return 1 if open_in_konqueror($url, %args);
 	} elsif ($browser eq 'galeon') {
 	    return 1 if open_in_galeon($url, %args);
+	} elsif ($browser eq 'mozilla') {
+	    return 1 if open_in_mozilla($url, %args);
 	} elsif ($browser =~ /^mosaic$/i &&
 	    $url =~ /^file:/ && $url !~ m|file://|) {
 	    $url =~ s|file:/|file://localhost/|;
@@ -192,6 +194,16 @@ sub open_in_galeon {
 
 	# otherwise start a new galeon process
 	exec_bg("galeon", $url);
+	return 1; # if ($?/256 == 0);
+    }
+    0;
+}
+
+sub open_in_mozilla {
+    my $url = shift;
+    my(%args) = @_;
+    if (is_in_path("mozilla")) {
+	system("mozilla", "-remote", "openURL($url)");
 	return 1; # if ($?/256 == 0);
     }
     0;
