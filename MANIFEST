@@ -4,3 +4,4 @@ Makefile.PL
 WWWBrowser.pm
 test.pl
 test.html
+anybrowser
