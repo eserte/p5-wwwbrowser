@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.8 2001/08/20 14:04:55 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.9 2001/10/22 14:25:46 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
@@ -17,12 +17,12 @@ package WWWBrowser;
 use strict;
 use vars qw(@unix_browsers $VERSION $initialized $os);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.8 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.9 $ =~ /(\d+)\.(\d+)/);
 
 # XXX Hmmm, kfmclient lädt kfm, und das stellt gleich die KDE-Icons
 # auf dem Desktop dar, auch wenn KDE gar nicht läuft. Trotzdem ist
 # kfm wahrscheinlich billiger als netscape.
-@unix_browsers = qw(netscape Netscape kfmclient
+@unix_browsers = qw(konqueror netscape Netscape kfmclient
 		    dillo w3m lynx
 		    mosaic Mosaic
 		    chimera arena tkweb) if !@unix_browsers;
@@ -82,7 +82,9 @@ sub start_browser {
 	# after this point only X11 browsers
 
 	my $url = $url;
-	if ($browser =~ /^mosaic$/i &&
+	if ($browser eq 'konqueror') {
+	    return 1 if open_in_konqueror($url);
+	} elsif ($browser =~ /^mosaic$/i &&
 	    $url =~ /^file:/ && $url !~ m|file://|) {
 	    $url =~ s|file:/|file://localhost/|;
 	} elsif ($browser eq 'kfmclient') {
@@ -112,6 +114,19 @@ sub start_browser {
     status_message("Can't find HTML viewer.", "err");
 
     return 0;
+}
+
+sub open_in_konqueror {
+    my $url = shift;
+    if (is_in_path("dcop") && is_in_path("konqueror")) {
+	# try first to send to running konqueror process:
+	system(qw/dcop konqueror KonquerorIface openBrowserWindow/, $url);
+	return 1 if ($?/256 == 0);
+	# otherwise start a new konqueror
+	system("konqueror", $url);
+	return 1 if ($?/256 == 0);
+    }
+    0;
 }
 
 sub exec_bg {
