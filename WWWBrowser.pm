@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.5 2001/03/27 22:42:11 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.6 2001/03/27 22:48:19 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
@@ -14,15 +14,10 @@
 
 package WWWBrowser;
 
-# In main sollte folgendes definiert sein:
-#   $os: Betriebssystem (win, mac oder unix)
-#   &status_message: Fehlermeldungsroutine
-# @INC muss für das Laden von Win32Util erweitert sein (nur Win32)
-
 use strict;
 use vars qw(@unix_browsers $VERSION $initialized $os);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.5 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.6 $ =~ /(\d+)\.(\d+)/);
 
 # XXX Hmmm, kfmclient lädt kfm, und das stellt gleich die KDE-Icons
 # auf dem Desktop dar, auch wenn KDE gar nicht läuft. Trotzdem ist
@@ -74,11 +69,16 @@ sub start_browser {
 		    }
 		}
 	    } else {
-		# without X11
-		exec_bg($browser, $url);
+		# without X11: not in background!
+		system($browser, $url);
+		return 1;
 	    }
 	    next;
 	}
+
+	next if !defined $ENV{DISPLAY} || $ENV{DISPLAY} eq '';
+	# after this point only X11 browsers
+
 	my $url = $url;
 	if ($browser =~ /^mosaic$/i &&
 	    $url =~ /^file:/ && $url !~ m|file://|) {
@@ -181,7 +181,8 @@ handled specially:
 =item lynx, w3m
 
 Text oriented browsers, which are opened in an C<xterm>, C<kvt> or
-C<gnome-terminal> (if running under X11).
+C<gnome-terminal> (if running under X11). If not running under X11,
+then no background process is started.
 
 =item kfmclient
 
@@ -193,6 +194,26 @@ Use C<-remote> option to re-use a running netscape process, if
 possible.
 
 =back
+
+The following variables can be defined globally in the B<main>
+package:
+
+=over 4
+
+=item C<$os>
+
+Short name of operating system (C<win>, C<mac> or C<unix>).
+
+=item C<&status_messages>
+
+Error handling function (instead of default C<warn>).
+
+=back
+
+=head1 REQUIREMENTS
+
+For Windows, the L<Win32Util|Win32Util> module should be installed in
+the path.
 
 =head1 AUTHOR
 
