@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.14 2002/02/22 21:16:16 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.15 2002/02/22 21:33:32 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
@@ -18,7 +18,7 @@ package WWWBrowser;
 use strict;
 use vars qw(@unix_browsers $VERSION $initialized $os $fork);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.14 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.15 $ =~ /(\d+)\.(\d+)/);
 
 @unix_browsers = qw(konqueror netscape Netscape kfmclient
 		    dillo w3m lynx
@@ -137,10 +137,27 @@ sub open_in_konqueror {
     my $url = shift;
     my(%args) = @_;
     if (is_in_path("dcop") && is_in_path("konqueror")) {
-	# try first to send to running konqueror process:
-	# XXX handle args{-oldwindow} ... see code in remote_konq.pl
+
+	# first try old window (if requested)
+	if ($args{-oldwindow}) {
+	    my $konq_name;
+	    foreach my $l (split /\n/, `dcop konqueror KonquerorIface getWindows`) {
+		if ($l =~ /(konqueror-mainwindow\#\d+)/) {
+		    $konq_name = $1;
+		    last;
+		}
+	    }
+
+	    if (defined $konq_name) {
+		system(qw/dcop konqueror/, $konq_name, qw/openURL/, $url);
+		return 1 if ($?/256 == 0);
+	    }
+	}
+
+	# then try to send to running konqueror process:
 	system(qw/dcop konqueror KonquerorIface openBrowserWindow/, $url);
 	return 1 if ($?/256 == 0);
+
 	# otherwise start a new konqueror
 	exec_bg("konqueror", $url);
 	return 1; # if ($?/256 == 0);
