@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.15 2002/02/22 21:33:32 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.16 2002/03/04 21:19:41 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
@@ -18,7 +18,7 @@ package WWWBrowser;
 use strict;
 use vars qw(@unix_browsers $VERSION $initialized $os $fork);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.15 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.16 $ =~ /(\d+)\.(\d+)/);
 
 @unix_browsers = qw(konqueror netscape Netscape kfmclient
 		    dillo w3m lynx
@@ -194,21 +194,7 @@ sub is_in_path {
 }
 # REPO END
 
-return 1 if caller();
-
-package main;
-
-require Getopt::Long;
-my @extra_args;
-if (!Getopt::Long::GetOptions
-    ("-browser=s"  => sub { push @extra_args, -browser => $_[1] },
-     "-fork!"      => \$WWWBrowser::fork,
-     "-oldwindow!" => sub { push @extra_args, -oldwindow => 1 },
-    )) {
-    die "usage: $^X $0 [-browser browser] [-[no]fork] [-oldwindow]\n"
-}
-
-WWWBrowser::start_browser($ARGV[0], @extra_args);
+1;
 
 __END__
 
