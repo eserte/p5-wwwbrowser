@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.17 2002/08/22 12:02:32 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.18 2002/09/03 06:33:09 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
@@ -18,9 +18,10 @@ package WWWBrowser;
 use strict;
 use vars qw(@unix_browsers $VERSION $initialized $os $fork);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.17 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.18 $ =~ /(\d+)\.(\d+)/);
 
-@unix_browsers = qw(galeon konqueror netscape Netscape kfmclient
+@unix_browsers = qw(_default_gnome _default_kde
+		    galeon konqueror netscape Netscape kfmclient
 		    dillo w3m lynx
 		    mosaic Mosaic
 		    chimera arena tkweb) if !@unix_browsers;
@@ -91,7 +92,15 @@ sub start_browser {
 	# after this point only X11 browsers
 
 	my $url = $url;
-	if ($browser eq 'konqueror') {
+	if ($browser eq '_default_gnome') {
+	    eval {
+		my $cmdline = _get_cmdline_for_url_from_Gnome($url);
+		exec_bg($cmdline);
+		return 1;
+	    };
+	} elsif ($browser eq '_default_kde') {
+	    # NYI
+	} elsif ($browser eq 'konqueror') {
 	    return 1 if open_in_konqueror($url, %args);
 	} elsif ($browser eq 'galeon') {
 	    return 1 if open_in_galeon($url, %args);
@@ -203,6 +212,37 @@ sub exec_bg {
     }
 }
 
+sub _get_cmdline_for_url_from_Gnome {
+    my($url) = @_;
+    (my $url_scheme = $url) =~ s/^([^:]+).*/$1/; # use URI.pm?
+    my $curr_section;
+    my $default_cmdline;
+    my $cmdline;
+    if (open(GNOME, "$ENV{HOME}/.gnome/Gnome")) {
+	while(<GNOME>) {
+	    chomp;
+	    if (/^\[(.*)\]/) {
+		$curr_section = $1;
+	    } elsif (defined $curr_section && $curr_section eq 'URL Handlers' && /^(default|\Q$url_scheme\E)-show=(.*)/) {
+		if ($1 eq 'default') {
+		    $default_cmdline = $2;
+		} else {
+		    $cmdline = $2;
+		}
+	    }
+	}
+	close GNOME;
+    }
+    if (!defined $cmdline) {
+	$cmdline = $default_cmdline;
+    }
+    if (!defined $cmdline) {
+	die "Can't find command for scheme $url_scheme";
+    }
+    $cmdline =~ s/%s/$url/g;
+    $cmdline;
+}
+
 # REPO BEGIN
 # REPO NAME is_in_path
 # REPO MD5 3beca578b54468d079bd465a90ebb198
@@ -276,6 +316,14 @@ Use C<openURL> method of kfm.
 
 Use C<-remote> option to re-use a running netscape process, if
 possible.
+
+=item _default_gnome
+
+Look into the C<~/.gnome/Gnome> configuration file for the right browser.
+
+=item _default_kde
+
+NYI.
 
 =back
 
