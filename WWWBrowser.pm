@@ -1,10 +1,10 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 1.4 1999/06/29 00:10:29 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.1 2000/06/16 23:13:11 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 1999 Slaven Rezic. All rights reserved.
+# Copyright (C) 1999, 2000 Slaven Rezic. All rights reserved.
 # This package is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -14,13 +14,17 @@
 
 package WWWBrowser;
 
-# in main muss folgendes definiert sein:
-# $os: Betriebssystem (win, mac oder unix)
-# &status_message: Fehlermeldungsroutine
-# @INC muss für das Laden von BBBikeUtil und Win32Util erweitert sein
+# In main sollte folgendes definiert sein:
+#   $os: Betriebssystem (win, mac oder unix)
+#   &status_message: Fehlermeldungsroutine
+# @INC muss für das Laden von Win32Util erweitert sein (nur Win32)
 
 use strict;
-use BBBikeUtil;
+
+$main::os = ($^O eq 'MSWin32' ? 'win' : 'unix') unless defined $main::os;
+if (!defined &main::status_message) {
+    eval 'sub status_message { warn $_[0] }';
+}
 
 sub start_browser {
     my $url = shift;
@@ -96,6 +100,31 @@ sub exec_bg {
     }
 }
 
-1;
+# REPO BEGIN
+# REPO NAME is_in_path
+# REPO MD5 3beca578b54468d079bd465a90ebb198
+=head2 is_in_path($prog)
+
+Return the pathname of $prog, if the program is in the PATH, or undef
+otherwise.
+
+=cut
+
+sub is_in_path {
+    my($prog) = @_;
+    require Config;
+    my $sep = $Config::Config{'path_sep'} || ':';
+    foreach (split(/$sep/o, $ENV{PATH})) {
+	return $_ if -x "$_/$prog";
+    }
+    undef;
+}
+# REPO END
+
+return 1 if caller();
+
+package main;
+
+WWWBrowser::start_browser $ARGV[0];
 
 __END__
