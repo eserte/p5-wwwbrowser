@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.23 2003/02/05 16:39:10 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.24 2003/04/25 22:24:41 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001,2003 Slaven Rezic. All rights reserved.
@@ -16,12 +16,14 @@
 package WWWBrowser;
 
 use strict;
-use vars qw(@unix_browsers $VERSION $initialized $os $fork
+use vars qw(@unix_browsers $VERSION $VERBOSE $initialized $os $fork
 	    $got_from_config $ignore_config);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.23 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.24 $ =~ /(\d+)\.(\d+)/);
 
-@unix_browsers = qw(_default_gnome _default_kde
+@unix_browsers = qw(_internal_htmlview
+		    _default_gnome _default_kde
+		    htmlview
 		    mozilla galeon konqueror netscape Netscape kfmclient
 		    dillo w3m lynx
 		    mosaic Mosaic
@@ -72,7 +74,7 @@ sub start_browser {
     }
 
     foreach my $browser (@browsers) {
-	next if (!is_in_path($browser));
+	next if ($browser !~ /^_/ && !is_in_path($browser));
 	if ($browser =~ /^(lynx|w3m)$/) { # text-orientierte Browser
 	    if (defined $ENV{DISPLAY} && $ENV{DISPLAY} ne "") {
 		foreach my $term (qw(xterm kvt gnome-terminal)) {
@@ -139,6 +141,16 @@ sub start_browser {
 		    }
 		}
 		exec_bg("netscape", $url);
+		return 1;
+	    }
+	} elsif ($browser eq '_internal_htmlview') {
+	    eval {
+		htmlview($url);
+	    };
+	    if ($@) {
+		warn $@;
+		next;
+	    } else {
 		return 1;
 	    }
 	} else {
@@ -293,6 +305,132 @@ sub _guess_and_expand_url {
     } else {
 	$url;
     }
+}
+
+# A port of htmlview to perl
+sub htmlview {
+    #!/bin/bash
+    #
+    # Invoke whatever HTML viewer is installed...
+    # Usage:
+    #	htmlview [URL]
+    #
+    # Changes:
+    # v2.0.0
+    # ------
+    # - Allow users to override default settings in
+    #   ~/.htmlviewrc and /etc/htmlview.conf.
+    #   Users can define X11BROWSER, TEXTBROWSER and
+    #   CONSOLE variables to indicate their preferences.
+    # - --remote and --local are deprecated, we don't
+    #   have any non-browser HTML viewers these days.
+    #
+    # Christopher Blizzard <blizzard@redhat.com> Aug 09 2002 
+    # - prefer mozilla over galeon
+    #
+    # written by Bernhard Rosenkraenzer <bero@redhat.com>
+    # (c) 2000-2002 Red Hat, Inc.
+    #
+    # This script is in the public domain.
+
+    #XXXunset BROWSER CONSOLE TERMS_KDE TERMS_GNOME TERMS_GENERIC
+    #XXX[ -e /etc/htmlview.conf ] && source /etc/htmlview.conf
+    #XXX[ -e ~/.htmlviewrc ] && source ~/.htmlviewrc
+
+    my(@args) = @_;
+
+    my @TERMS_KDE = qw(/usr/bin/konsole /usr/bin/kvt);
+    my @TERMS_GNOME = qw(/usr/bin/gnome-terminal);
+    my @TERMS_GENERIC = qw(/usr/bin/rxvt /usr/X11R6/bin/xterm /usr/bin/Eterm);
+    my @TTYBROWSERS = qw(/usr/bin/links /usr/bin/lynx /usr/bin/w3m);
+    my @X11BROWSERS_KDE = qw(/usr/bin/konqueror /usr/bin/kfmbrowser);
+    my @X11BROWSERS_GNOME = qw(/usr/bin/mozilla /usr/bin/galeon);
+    my @X11BROWSERS_GENERIC = qw(/usr/bin/mozilla /usr/bin/netscape);
+
+    my(@X11BROWSERS, @TERMS);
+
+    my $gnome_is_running;
+    if (eval { require Proc::ProcessTable }) {
+	require File::Basename;
+	for my $p (@{ Proc::ProcessTable->new->table }) {
+	    if (File::Basename::basename($p->fname) eq 'gnome-session') {
+		$gnome_is_running++;
+		last;
+	    }
+	}
+    } elsif (-x "/sbin/pidof") {
+	my($out) = `/sbin/pidof gnome-session`;
+	$gnome_is_running = $out ? 1 : 0;
+    } else {
+	warn "Cannot determine whether GNOME is running: neither Proc::ProcessTable nor pidof are available\n";
+    }
+
+    if ($gnome_is_running) {
+	@X11BROWSERS = (@X11BROWSERS_GENERIC, @X11BROWSERS_GNOME, @X11BROWSERS_KDE);
+	@TERMS = (@TERMS_GENERIC, @TERMS_GNOME, @TERMS_KDE);
+    } else {
+	@X11BROWSERS = (@X11BROWSERS_GENERIC, @X11BROWSERS_KDE, @X11BROWSERS_GNOME);
+	@TERMS = (@TERMS_GENERIC, @TERMS_KDE, @TERMS_GNOME);
+    }
+
+    if ($ENV{X11BROWSER}) {
+	unshift @X11BROWSERS, $ENV{X11BROWSER};
+    }
+    if ($ENV{TEXTBROWSER}) {
+	unshift @TTYBROWSERS, $ENV{TEXTBROWSER};
+    }
+    if ($ENV{CONSOLE}) {
+	unshift @TERMS, $ENV{CONSOLE};
+    }
+
+    if ($VERBOSE) {
+	require Data::Dumper;
+	print STDERR Data::Dumper->new([\@X11BROWSERS, \@TTYBROWSERS, \@TERMS],
+				       [qw(X11BROWSERS TTYBROWSERS TERMS)])
+	    ->Indent(1)->Useqq(1)->Dump;
+    }
+
+ TRY: {
+	if (!defined $ENV{DISPLAY} || $ENV{DISPLAY} eq "") {
+	    for my $ttybrowser (@TTYBROWSERS) {
+		if (is_in_path($ttybrowser)) {
+		    system($ttybrowser, @args); # blocks in tty mode
+		    last TRY;
+		}
+	    }
+
+	    die "No valid text mode browser found.\n";
+	} else {
+	    for my $x11browser (@X11BROWSERS) {
+		if (is_in_path($x11browser)) {
+		    exec_bg($x11browser, @args);
+		    last TRY;
+		}
+	    }
+
+	    my @console;
+	    for my $term (@TERMS) {
+		if (is_in_path($term)) {
+		    @console = ($term, "-e");
+		    last;
+		}
+	    }
+
+	    if (!@console) {
+		die "No CONSOLE found.\n";
+	    }
+
+	    for my $ttybrowser (@TTYBROWSERS) {
+		if (is_in_path($ttybrowser)) {
+		    exec_bg(@console, $ttybrowser, @args);
+		    last TRY;
+		}
+	    }
+	}
+
+	die "No valid browser found.\n";
+    }
+
 }
 
 # REPO BEGIN
