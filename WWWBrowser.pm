@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.13 2001/11/17 12:09:54 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.14 2002/02/22 21:16:16 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
@@ -18,7 +18,7 @@ package WWWBrowser;
 use strict;
 use vars qw(@unix_browsers $VERSION $initialized $os $fork);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.13 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.14 $ =~ /(\d+)\.(\d+)/);
 
 @unix_browsers = qw(konqueror netscape Netscape kfmclient
 		    dillo w3m lynx
@@ -46,6 +46,7 @@ sub init {
 
 sub start_browser {
     my $url = shift;
+    my(%args) = @_;
 
     if ($os eq 'win') {
 	if (!eval 'require Win32Util;
@@ -61,7 +62,12 @@ sub start_browser {
 	return 1;
     }
 
-    foreach my $browser (@unix_browsers) {
+    my @browsers = @unix_browsers;
+    if ($args{-browser}) {
+	unshift @browsers, delete $args{-browser};
+    }
+
+    foreach my $browser (@browsers) {
 	next if (!is_in_path($browser));
 	if ($browser =~ /^(lynx|w3m)$/) { # text-orientierte Browser
 	    if (defined $ENV{DISPLAY} && $ENV{DISPLAY} ne "") {
@@ -86,7 +92,7 @@ sub start_browser {
 
 	my $url = $url;
 	if ($browser eq 'konqueror') {
-	    return 1 if open_in_konqueror($url);
+	    return 1 if open_in_konqueror($url, %args);
 	} elsif ($browser =~ /^mosaic$/i &&
 	    $url =~ /^file:/ && $url !~ m|file://|) {
 	    $url =~ s|file:/|file://localhost/|;
@@ -103,8 +109,11 @@ sub start_browser {
 		    # XXX check $host
 		    # Check whether Netscape stills lives:
 		    if (defined $pid && kill 0 => $pid) {
-			# XXX another argument to openURL: create new window
-			exec_bg("netscape", "-remote", "openURL($url)");
+			if ($args{-oldwindow}) {
+			    exec_bg("netscape", "-remote", "openURL($url)");
+			} else {
+			    exec_bg("netscape", "-remote", "openURL($url,new)");
+			}
 		        # XXX further options: mailto(to-adresses)
 			# XXX check return code?
 			return 1;
@@ -126,8 +135,10 @@ sub start_browser {
 
 sub open_in_konqueror {
     my $url = shift;
+    my(%args) = @_;
     if (is_in_path("dcop") && is_in_path("konqueror")) {
 	# try first to send to running konqueror process:
+	# XXX handle args{-oldwindow} ... see code in remote_konq.pl
 	system(qw/dcop konqueror KonquerorIface openBrowserWindow/, $url);
 	return 1 if ($?/256 == 0);
 	# otherwise start a new konqueror
@@ -171,13 +182,16 @@ return 1 if caller();
 package main;
 
 require Getopt::Long;
-my $browser;
-if (!Getopt::Long::GetOptions("-browser=s" => \$browser,
-			      "-fork!" => \$WWWBrowser::fork,
-			     )) { die "usage!" }
-if ($browser) { unshift @WWWBrowser::unix_browsers, $browser }
+my @extra_args;
+if (!Getopt::Long::GetOptions
+    ("-browser=s"  => sub { push @extra_args, -browser => $_[1] },
+     "-fork!"      => \$WWWBrowser::fork,
+     "-oldwindow!" => sub { push @extra_args, -oldwindow => 1 },
+    )) {
+    die "usage: $^X $0 [-browser browser] [-[no]fork] [-oldwindow]\n"
+}
 
-WWWBrowser::start_browser $ARGV[0];
+WWWBrowser::start_browser($ARGV[0], @extra_args);
 
 __END__
 
@@ -188,14 +202,31 @@ WWWBrowser - platform independent mean to start a WWW browser
 =head1 SYNOPSIS
 
     use WWWBrowser;
-    WWWBrowser::start_browser($url);
+    WWWBrowser::start_browser($url, -oldwindow => 1);
 
 =head1 DESCRIPTION
 
-=head2 start_browser($url)
+=head2 start_browser($url [, %args])
 
 Start a web browser with the specified URL. The process is started in
 background.
+
+The following optional parameters are recognized:
+
+=over 4
+
+=item -oldwindow => $bool
+
+Normally, the URL is loaded into a new window, if possible. With
+C<-oldwindow> set to a false window, C<WWWBrowser> will try to re-use
+a browser window.
+
+=item -browser => $browser
+
+Use (preferebly) the named browser C<$browser>. See L</CONFIGURATION>
+for a some browser specialities. This option will only work for unix.
+
+=back
 
 =head1 CONFIGURATION
 
