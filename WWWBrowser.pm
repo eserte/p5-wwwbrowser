@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.7 2001/04/07 19:14:40 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.8 2001/08/20 14:04:55 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
@@ -17,13 +17,13 @@ package WWWBrowser;
 use strict;
 use vars qw(@unix_browsers $VERSION $initialized $os);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.7 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.8 $ =~ /(\d+)\.(\d+)/);
 
 # XXX Hmmm, kfmclient lädt kfm, und das stellt gleich die KDE-Icons
 # auf dem Desktop dar, auch wenn KDE gar nicht läuft. Trotzdem ist
 # kfm wahrscheinlich billiger als netscape.
 @unix_browsers = qw(netscape Netscape kfmclient
-		    w3m lynx
+		    dillo w3m lynx
 		    mosaic Mosaic
 		    chimera arena tkweb) if !@unix_browsers;
 
