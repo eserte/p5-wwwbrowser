@@ -9,6 +9,7 @@ if ($^O eq 'MSWin32') {
 
 WriteMakefile(
     'NAME'		=> 'WWWBrowser',
-    'VERSION_FROM'	=> 'WWWBrowser.pm', # finds $VERSION
-    'PREREQ_PM'		=> $prereq, # e.g., Module::Name => 1.1
+    'VERSION_FROM'	=> 'WWWBrowser.pm',
+    'PREREQ_PM'		=> $prereq,
+    'EXE_FILES'         => ['anybrowser'],
 );
