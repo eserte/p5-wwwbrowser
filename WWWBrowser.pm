@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.21 2002/11/10 19:56:26 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.22 2003/01/21 22:01:12 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
@@ -19,7 +19,7 @@ use strict;
 use vars qw(@unix_browsers $VERSION $initialized $os $fork
 	    $got_from_config $ignore_config);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.21 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.22 $ =~ /(\d+)\.(\d+)/);
 
 @unix_browsers = qw(_default_gnome _default_kde
 		    mozilla galeon konqueror netscape Netscape kfmclient
@@ -185,18 +185,17 @@ sub open_in_galeon {
     my(%args) = @_;
     if (is_in_path("galeon")) {
 
+	$url = _guess_and_expand_url($url) if $args{-expandurl};
+
 	# first try old window (if requested)
 	if ($args{-oldwindow}) {
 	    system("galeon", "-x", $url);
 	    return 1 if ($?/256 == 0);
 	}
 
-	system("galeon", "-n", $url);
+	exec_bg("galeon", "-n", $url);
 	return 1 if ($?/256 == 0);
-
-	# otherwise start a new galeon process
-	exec_bg("galeon", $url);
-	return 1; # if ($?/256 == 0);
+	return 0;
     }
     0;
 }
@@ -276,6 +275,19 @@ sub get_from_config {
 	close CFG;
 	$got_from_config++;
 	unshift @unix_browsers, @browser;
+    }
+}
+
+sub _guess_and_expand_url {
+    my $url = shift;
+    if ($url =~ m|^[a-z]+://|) {
+	$url;
+    } elsif ($url =~ m|^www|) {
+	"http://$url";
+    } elsif ($url =~ m|^ftp|) {
+	"ftp://$url";
+    } else {
+	$url;
     }
 }
 
