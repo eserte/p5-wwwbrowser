@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.1 2000/06/16 23:13:11 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.2 2000/07/22 19:56:34 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999, 2000 Slaven Rezic. All rights reserved.
@@ -20,6 +20,15 @@ package WWWBrowser;
 # @INC muss für das Laden von Win32Util erweitert sein (nur Win32)
 
 use strict;
+use vars qw(@unix_browsers);
+
+# XXX Hmmm, kfmclient lädt kfm, und das stellt gleich die KDE-Icons
+# auf dem Desktop dar, auch wenn KDE gar nicht läuft. Trotzdem ist
+# kfm wahrscheinlich billiger als netscape.
+@unix_browsers = qw(netscape Netscape kfmclient
+		    w3m lynx
+		    mosaic Mosaic
+		    chimera arena tkweb) if !@unix_browsers;
 
 $main::os = ($^O eq 'MSWin32' ? 'win' : 'unix') unless defined $main::os;
 if (!defined &main::status_message) {
@@ -40,17 +49,15 @@ sub start_browser {
 	}
     }
 
-    # XXX Hmmm, kfmclient lädt kfm, und das stellt gleich die KDE-Icons
-    # auf dem Desktop dar, auch wenn KDE gar nicht läuft. Trotzdem ist
-    # kfm wahrscheinlich billiger als netscape.
-    # XXX Vielleicht auch einen Lieblingsbrowser angeben lassen (Optionen).
-    foreach my $browser (qw(netscape Netscape kfmclient lynx mosaic Mosaic
-			    chimera arena tkweb)) {
+    foreach my $browser (@unix_browsers) {
 	next if (!is_in_path($browser));
-	if ($browser eq 'lynx') { # text-orientierte Browser
-	    if (is_in_path('xterm')) {
-		exec_bg('xterm', '-e', $browser, $url);
-		return 1;
+	if ($browser =~ /^(lynx|w3m)$/) { # text-orientierte Browser
+	    foreach my $term (qw(xterm kvt gnome-terminal)) {
+		if (is_in_path($term)) {
+		    exec_bg($term, ($term eq 'gnome_terminal' ? '-x' : '-e'),
+			    $browser, $url);
+		    return 1;
+		}
 	    }
 	    next;
 	}
