@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.6 2001/03/27 22:48:19 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.7 2001/04/07 19:14:40 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
@@ -17,7 +17,7 @@ package WWWBrowser;
 use strict;
 use vars qw(@unix_browsers $VERSION $initialized $os);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.6 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.7 $ =~ /(\d+)\.(\d+)/);
 
 # XXX Hmmm, kfmclient lädt kfm, und das stellt gleich die KDE-Icons
 # auf dem Desktop dar, auch wenn KDE gar nicht läuft. Trotzdem ist
@@ -33,6 +33,8 @@ sub init {
     if (!$initialized) {
 	if (!defined $main::os) {
 	    $os = ($^O eq 'MSWin32' ? 'win' : 'unix');
+	} else {
+	    $os = $main::os;
 	}
 	if (!defined &main::status_message) {
 	    eval 'sub status_message { warn $_[0] }';
