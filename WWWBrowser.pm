@@ -2,14 +2,14 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.22 2003/01/21 22:01:12 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.23 2003/02/05 16:39:10 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 1999,2000,2001 Slaven Rezic. All rights reserved.
+# Copyright (C) 1999,2000,2001,2003 Slaven Rezic. All rights reserved.
 # This package is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
-# Mail: slaven.rezic@berlin.de
+# Mail: slaven@rezic.de
 # WWW:  http://www.rezic.de/eserte/
 #
 
@@ -19,13 +19,14 @@ use strict;
 use vars qw(@unix_browsers $VERSION $initialized $os $fork
 	    $got_from_config $ignore_config);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.22 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.23 $ =~ /(\d+)\.(\d+)/);
 
 @unix_browsers = qw(_default_gnome _default_kde
 		    mozilla galeon konqueror netscape Netscape kfmclient
 		    dillo w3m lynx
 		    mosaic Mosaic
-		    chimera arena tkweb) if !@unix_browsers;
+		    chimera arena tkweb
+		    explorer) if !@unix_browsers;
 
 init();
 
@@ -54,8 +55,8 @@ sub start_browser {
     if ($os eq 'win') {
 	if (!eval 'require Win32Util;
 	           Win32Util::start_html_viewer($url)') {
-	    # if this fails, just try to start a default viewer
-	    system($url);
+	    # if this fails, just try to start explorer
+	    system("start explorer $url");
 	    # otherwise croak
 	    if ($?/256 != 0) {
 		status_message("Can't find HTML viewer.", "err");
@@ -90,8 +91,11 @@ sub start_browser {
 	    next;
 	}
 
-	next if !defined $ENV{DISPLAY} || $ENV{DISPLAY} eq '';
-	# after this point only X11 browsers
+	if ((!defined $ENV{DISPLAY} || $ENV{DISPLAY} eq '') &&
+	    $^O ne 'cygwin') {
+	    next;
+	}
+	# After this point only X11 browsers or cygwin as a special case
 
 	my $url = $url;
 	if ($browser eq '_default_gnome') {
@@ -292,14 +296,45 @@ sub _guess_and_expand_url {
 }
 
 # REPO BEGIN
-# REPO NAME is_in_path
-# REPO MD5 3beca578b54468d079bd465a90ebb198
+# REPO NAME file_name_is_absolute /home/e/eserte/src/repository 
+# REPO MD5 89d0fdf16d11771f0f6e82c7d0ebf3a8
+BEGIN {
+    if (eval { require File::Spec; defined &File::Spec::file_name_is_absolute }) {
+	*file_name_is_absolute = \&File::Spec::file_name_is_absolute;
+    } else {
+	*file_name_is_absolute = sub {
+	    my $file = shift;
+	    my $r;
+	    if ($^O eq 'MSWin32') {
+		$r = ($file =~ m;^([a-z]:(/|\\)|\\\\|//);i);
+	    } else {
+		$r = ($file =~ m|^/|);
+	    }
+	    $r;
+	};
+    }
+}
+# REPO END
+
+# REPO BEGIN
+# REPO NAME is_in_path /home/e/eserte/src/repository 
+# REPO MD5 81c0124cc2f424c6acc9713c27b9a484
 sub is_in_path {
     my($prog) = @_;
+    return $prog if (file_name_is_absolute($prog) and -f $prog and -x $prog);
     require Config;
     my $sep = $Config::Config{'path_sep'} || ':';
     foreach (split(/$sep/o, $ENV{PATH})) {
-	return $_ if -x "$_/$prog";
+	if ($^O eq 'MSWin32') {
+	    # maybe use $ENV{PATHEXT} like maybe_command in ExtUtils/MM_Win32.pm?
+	    return "$_\\$prog"
+		if (-x "$_\\$prog.bat" ||
+		    -x "$_\\$prog.com" ||
+		    -x "$_\\$prog.exe" ||
+		    -x "$_\\$prog.cmd");
+	} else {
+	    return "$_/$prog" if (-x "$_/$prog" && !-d "$_/$prog");
+	}
     }
     undef;
 }
@@ -397,11 +432,11 @@ the path.
 
 =head1 AUTHOR
 
-Slaven Rezic <eserte@cs.tu-berlin.de>
+Slaven Rezic <slaven@rezic.de>
 
 =head1 COPYRIGHT
 
-Copyright (c) 1999,2000,2001 Slaven Rezic. All rights reserved.
+Copyright (c) 1999,2000,2001,2003 Slaven Rezic. All rights reserved.
 This module is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
