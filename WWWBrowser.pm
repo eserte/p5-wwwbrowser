@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 1.1 1999/02/18 21:52:42 eserte Exp $
+# $Id: WWWBrowser.pm,v 1.2 1999/02/20 16:37:41 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999 Slaven Rezic. All rights reserved.
@@ -64,6 +64,9 @@ sub start_browser {
 		    # with kill -$$
 		    exec_bg("netscape", "-remote", "openURL($url)");
 		    # XXX check return code?
+		    return 1;
+		} else {
+		    exec_bg("netscape", $url);
 		    return 1;
 		}
 	    }
