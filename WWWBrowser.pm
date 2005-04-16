@@ -2,10 +2,10 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.25 2005/04/16 01:30:09 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.26 2005/04/16 01:30:45 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 1999,2000,2001,2003 Slaven Rezic. All rights reserved.
+# Copyright (C) 1999,2000,2001,2003,2005 Slaven Rezic. All rights reserved.
 # This package is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -19,7 +19,7 @@ use strict;
 use vars qw(@unix_browsers $VERSION $VERBOSE $initialized $os $fork
 	    $got_from_config $ignore_config);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.25 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.26 $ =~ /(\d+)\.(\d+)/);
 
 @unix_browsers = qw(_internal_htmlview
 		    _default_gnome _default_kde
@@ -57,12 +57,16 @@ sub start_browser {
     if ($os eq 'win') {
 	if (!eval 'require Win32Util;
 	           Win32Util::start_html_viewer($url)') {
-	    # if this fails, just try to start explorer
-	    system("start explorer $url");
-	    # otherwise croak
+	    # if this fails, just try the url only
+	    system("start $url");
 	    if ($?/256 != 0) {
-		status_message("Can't find HTML viewer.", "err");
-		return 0;
+		# otherwise explicitely use explorer
+		system("start explorer $url");
+		if ($?/256 != 0) {
+		    # or die ...
+		    status_message("Can't find HTML viewer.", "err");
+		    return 0;
+		}
 	    }
 	}
 	return 1;
