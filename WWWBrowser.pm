@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.27 2005/05/12 20:50:14 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.28 2005/05/12 20:54:27 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001,2003,2005 Slaven Rezic. All rights reserved.
@@ -19,7 +19,7 @@ use strict;
 use vars qw(@unix_browsers $VERSION $VERBOSE $initialized $os $fork
 	    $got_from_config $ignore_config);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.27 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.28 $ =~ /(\d+)\.(\d+)/);
 
 @unix_browsers = qw(_internal_htmlview
 		    _default_gnome _default_kde
@@ -35,7 +35,10 @@ init();
 sub init {
     if (!$initialized) {
 	if (!defined $main::os) {
-	    $os = ($^O eq 'MSWin32' ? 'win' : 'unix');
+	    $os = ($^O eq 'MSWin32' ? 'win' :
+		   $^O eq 'darwin'  ? 'macosx' :
+		   $^O eq 'MacOS'   ? 'mac' :
+		                      'unix');
 	} else {
 	    $os = $main::os;
 	}
@@ -71,6 +74,11 @@ sub start_browser {
 		}
 	    }
 	}
+	return 1;
+    }
+
+    if ($os eq 'macosx') {
+	exec_bg("open", $url);
 	return 1;
     }
 
@@ -242,7 +250,7 @@ sub open_in_mozilla {
 
 sub exec_bg {
     my(@cmd) = @_;
-    if ($os eq 'unix') {
+    if ($os eq 'unix' || $os eq 'macosx') {
 	eval {
 	    if (!$fork || fork == 0) {
 		exec @cmd;
@@ -570,7 +578,7 @@ package:
 
 =item C<$os>
 
-Short name of operating system (C<win>, C<mac> or C<unix>).
+Short name of operating system (C<win>, C<mac>, C<macosx> or C<unix>).
 
 =item C<&status_messages>
 
