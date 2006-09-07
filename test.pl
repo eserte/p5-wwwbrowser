@@ -22,6 +22,8 @@ use Cwd qw(cwd);
 use Sys::Hostname qw(hostname);
 use File::Spec;
 
+$WWWBrowser::VERBOSE = 1;
+
 if (!$ENV{BATCH}) {
     WWWBrowser::start_browser("file:" . File::Spec->catfile(cwd, "test.html"));
 }
