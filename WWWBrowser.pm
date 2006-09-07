@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.32 2006/09/07 23:36:52 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.33 2006/09/07 23:43:16 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001,2003,2005,2006 Slaven Rezic. All rights reserved.
@@ -17,10 +17,11 @@ package WWWBrowser;
 
 use strict;
 use vars qw(@unix_browsers @available_browsers
+	    @terminals @available_terminals
 	    $VERSION $VERBOSE $initialized $os $fork
 	    $got_from_config $ignore_config);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.32 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.33 $ =~ /(\d+)\.(\d+)/);
 
 @available_browsers = qw(_debian_browser _internal_htmlview
 			 _default_gnome _default_kde
@@ -32,6 +33,10 @@ $VERSION = sprintf("%d.%02d", q$Revision: 2.32 $ =~ /(\d+)\.(\d+)/);
 			 explorer);
 
 @unix_browsers = @available_browsers if !@unix_browsers;
+
+@available_terminals = qw(xterm konsole gnome-terminal rxvt Eterm kvt);
+
+@terminals = @available_terminals if !@terminals;
 
 init();
 
@@ -93,6 +98,10 @@ sub start_browser {
     }
 
     foreach my $browser (@browsers) {
+	if ($VERBOSE >= 2) {
+	    warn "Try $browser ...\n";
+	}
+
 	next if ($browser !~ /^_/ && !is_in_path($browser));
 	if ($browser =~ /^(lynx|w3m)$/) { # text-orientierte Browser
 	    return 1 if open_in_terminal($browser, $url, %args);
@@ -479,7 +488,7 @@ sub open_in_terminal {
     my($browser, $url, %args) = @_;
 
     if (defined $ENV{DISPLAY} && $ENV{DISPLAY} ne "") {
-	foreach my $term (qw(xterm kvt gnome-terminal)) {
+	foreach my $term (@terminals) {
 	    if (is_in_path($term)) {
 		exec_bg($term,
 			($term eq 'gnome_terminal' ? '-x' : '-e'),
