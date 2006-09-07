@@ -1,33 +1,54 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
+#!/usr/bin/perl -w
 
-######################### We start with some black magic to print on failure.
-
-# Change 1..1 below to 1..last_test_to_print .
-# (It may become useful if the test is moved to ./t subdirectory.)
-
-BEGIN { $| = 1; print "1..1\n"; }
-END {print "not ok 1\n" unless $loaded;}
-use WWWBrowser;
-$loaded = 1;
-print "ok 1\n";
-
-######################### End of black magic.
-
-# Insert your test code below (better if it prints "ok 13"
-# (correspondingly "not ok 13") depending on the success of chunk 13
-# of the test code):
+use strict;
+use Test::More;
 
 use Cwd qw(cwd);
 use Sys::Hostname qw(hostname);
 use File::Spec;
+use Getopt::Long;
+
+plan tests => 2;
+
+if (0) { # cease -w
+    $WWWBrowser::VERBOSE = $WWWBrowser::VERBOSE;
+    $WWWBrowser::available_browsers = $WWWBrowser::available_browsers;
+}
 
 $WWWBrowser::VERBOSE = 1;
 
-if (!$ENV{BATCH}) {
-    WWWBrowser::start_browser("file:" . File::Spec->catfile(cwd, "test.html"));
+my $vran = hostname eq 'vran.herceg.de';
+my $all;
+
+GetOptions("browser=s" => sub {
+	       my $browser = $_[1];
+	       @WWWBrowser::unix_browsers = $browser;
+	   },
+	   "all!" => \$all,
+	   "vran!" => \$vran,
+	  )
+    or die "usage: $0 [-browser browser]";
+
+my $local_html_url = "file:" . File::Spec->catfile(cwd, "test.html");
+
+use_ok("WWWBrowser");
+
+if ($all) {
+    for my $browser (@WWWBrowser::available_browsers) {
+	local @WWWBrowser::unix_browsers = $browser;
+	print STDERR "*** Try $browser...\n";
+	WWWBrowser::start_browser($local_html_url);
+	print STDERR "*** Press RETURN to continue...\n";
+	<STDIN>;
+    }
+} else {
+    if (!$ENV{BATCH}) {
+	WWWBrowser::start_browser($local_html_url);
+    }
+
+    if ($vran) {
+	WWWBrowser::start_browser("www.herceg.de", -expandurl => 1);
+    }
 }
 
-if (hostname eq 'vran.herceg.de') {
-    WWWBrowser::start_browser("www.herceg.de", -expandurl => 1);
-}
+pass("Did you see a simple page in a WWW browser?");
