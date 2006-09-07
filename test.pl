@@ -17,6 +17,8 @@ if (0) { # cease -w
 
 $WWWBrowser::VERBOSE = 1;
 
+use_ok("WWWBrowser");
+
 my $vran = hostname eq 'vran.herceg.de';
 my $all;
 
@@ -30,8 +32,6 @@ GetOptions("browser=s" => sub {
     or die "usage: $0 [-browser browser]";
 
 my $local_html_url = "file:" . File::Spec->catfile(cwd, "test.html");
-
-use_ok("WWWBrowser");
 
 if ($all) {
     for my $browser (@WWWBrowser::available_browsers) {
