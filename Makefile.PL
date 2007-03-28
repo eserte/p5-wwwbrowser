@@ -4,7 +4,7 @@ use ExtUtils::MakeMaker;
 
 my $prereq = {};
 if ($^O eq 'MSWin32') {
-    $prereq->{'Win32Util'} = undef;
+    $prereq->{'Win32Util'} = 0;
 }
 
 WriteMakefile(
