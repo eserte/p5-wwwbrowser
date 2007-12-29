@@ -1,8 +1,7 @@
-#!/usr/bin/env perl
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.39 2007/11/08 21:35:39 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.40 2007/12/29 09:59:37 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001,2003,2005,2006,2007 Slaven Rezic.
@@ -24,7 +23,7 @@ use vars qw(@unix_browsers @available_browsers
 	    $VERSION $VERBOSE $initialized $os $fork
 	    $got_from_config $ignore_config);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.39 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.40 $ =~ /(\d+)\.(\d+)/);
 
 @available_browsers = qw(_debian_browser _internal_htmlview
 			 _default_gnome _default_kde
