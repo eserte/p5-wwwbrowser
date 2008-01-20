@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.40 2007/12/29 09:59:37 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.41 2008/01/20 19:16:09 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001,2003,2005,2006,2007 Slaven Rezic.
@@ -23,7 +23,7 @@ use vars qw(@unix_browsers @available_browsers
 	    $VERSION $VERBOSE $initialized $os $fork
 	    $got_from_config $ignore_config);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.40 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.41 $ =~ /(\d+)\.(\d+)/);
 
 @available_browsers = qw(_debian_browser _internal_htmlview
 			 _default_gnome _default_kde
@@ -64,25 +64,7 @@ sub start_browser {
     my(%args) = @_;
 
     if ($os eq 'win') {
-	if (!eval 'require Win32Util;
-	           Win32Util::start_html_viewer($url)') {
-	    # If this fails, just try the url only.
-	    # XXX There are reports that "start" and Tk programms
-	    # do not work well together (slow startup and such).
-	    system("start $url");
-	    if ($?/256 != 0) {
-		# otherwise explicitely use explorer
-		system("start explorer $url");
-		# maybe: system("start", "explorer", $url);
-		# or:    system("start explorer \"$url\"");
-		if ($?/256 != 0) {
-		    # or die ...
-		    status_message("Can't find HTML viewer.", "err");
-		    return 0;
-		}
-	    }
-	}
-	return 1;
+	return start_browser_windows($url, %args);
     }
 
     if ($os eq 'macosx') {
@@ -196,6 +178,42 @@ sub start_browser {
 
     status_message("Can't find HTML viewer.", "err");
 
+    return 0;
+}
+
+sub start_browser_windows {
+    my($url, %args) = @_;
+    my @methods;
+    if ($ENV{OS} && $ENV{OS} eq 'Windows_NT') { # NT, 2000, XP, Vista...
+	@methods = qw(start win32util explorer);
+    } else {
+	@methods = qw(win32util start explorer);
+    }
+
+    for my $method (@methods) {
+	if ($method eq 'start') {
+	    # XXX There are reports that "start" and Tk programms
+	    # do not work well together (slow startup and such).
+	    system("start $url");
+	    if ($?/256 == 0) {
+		return 1;
+	    }
+	} elsif ($method eq 'explorer') {
+	    system("start explorer $url");
+	    # maybe: system("start", "explorer", $url);
+	    # or:    system("start explorer \"$url\"");
+	    if ($?/256 == 0) {
+		return 1;
+	    }
+	} elsif ($method eq 'win32util' &&
+		 eval { require Win32Util; 1 }) {
+	    if (eval { Win32Util::start_html_viewer($url) }) {
+		return 1;
+	    }
+	}
+    }
+
+    status_message("Can't find HTML viewer.", "err");
     return 0;
 }
 
