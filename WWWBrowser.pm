@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.43 2008/01/20 22:04:12 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.44 2008/01/26 11:34:36 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001,2003,2005,2006,2007,2008 Slaven Rezic.
@@ -23,7 +23,7 @@ use vars qw(@unix_browsers @available_browsers
 	    $VERSION $VERBOSE $initialized $os $fork
 	    $got_from_config $ignore_config);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.43 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.44 $ =~ /(\d+)\.(\d+)/);
 
 @available_browsers = qw(_debian_browser _internal_htmlview
 			 _default_gnome _default_kde
@@ -594,7 +594,6 @@ sub is_in_path {
     sub launch {
 	WWWBrowser::start_browser(@_);
     }
-    *Launcher::WWW = \&Launcher::WWW::launch;
 }
 
 1;
