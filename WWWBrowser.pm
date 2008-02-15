@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.44 2008/01/26 11:34:36 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.45 2008/02/15 22:14:18 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001,2003,2005,2006,2007,2008 Slaven Rezic.
@@ -23,7 +23,7 @@ use vars qw(@unix_browsers @available_browsers
 	    $VERSION $VERBOSE $initialized $os $fork
 	    $got_from_config $ignore_config);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.44 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.45 $ =~ /(\d+)\.(\d+)/);
 
 @available_browsers = qw(_debian_browser _internal_htmlview
 			 _default_gnome _default_kde
@@ -143,14 +143,14 @@ sub start_browser {
 		return 1;
 	    }
 	} elsif ($browser eq '_internal_htmlview') {
-	    eval {
+	    my $ret = eval {
 		htmlview($url);
 	    };
 	    if ($@) {
 		warn $@;
 		next;
-	    } else {
-		return 1;
+	    } elsif ($ret) {
+		return $ret;
 	    }
 	} elsif ($browser eq '_debian_browser') {
 	    if (-x "/usr/bin/sensible-browser") {
@@ -176,9 +176,23 @@ sub start_browser {
 	}
     }
 
+    if ($^O eq 'cygwin') {
+	return 1 if start_windows_browser_cygwin($url, %args);
+    }
+
     status_message("Can't find HTML viewer.", "err");
 
     return 0;
+}
+
+sub start_windows_browser_cygwin {
+    my($url, %args) = @_;
+    system("cmd", "/c", "start", $url);
+    if ($? == 0) {
+	return 1;
+    } else {
+	return 0;
+    }
 }
 
 sub start_browser_windows {
@@ -521,6 +535,7 @@ sub htmlview {
 	die "No valid browser found.\n";
     }
 
+    return 1;
 }
 
 sub open_in_terminal {
