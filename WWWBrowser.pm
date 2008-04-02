@@ -1,7 +1,7 @@
 # -*- perl -*-
 
 #
-# $Id: WWWBrowser.pm,v 2.45 2008/02/15 22:14:18 eserte Exp $
+# $Id: WWWBrowser.pm,v 2.46 2008/04/02 18:21:05 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2000,2001,2003,2005,2006,2007,2008 Slaven Rezic.
@@ -21,9 +21,9 @@ use strict;
 use vars qw(@unix_browsers @available_browsers
 	    @terminals @available_terminals
 	    $VERSION $VERBOSE $initialized $os $fork
-	    $got_from_config $ignore_config);
+	    $ignore_config);
 
-$VERSION = sprintf("%d.%02d", q$Revision: 2.45 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 2.46 $ =~ /(\d+)\.(\d+)/);
 
 @available_browsers = qw(_debian_browser _internal_htmlview
 			 _default_gnome _default_kde
@@ -381,7 +381,7 @@ sub _get_cmdline_for_url_from_Gnome {
 
 # XXX document get_from_config, $ignore_config, ~/.wwwbrowser
 sub get_from_config {
-    if (!$got_from_config && !$ignore_config && $ENV{HOME} && open(CFG, "$ENV{HOME}/.wwwbrowser")) {
+    if (!$ignore_config && $ENV{HOME} && open(CFG, "$ENV{HOME}/.wwwbrowser")) {
 	my @browser;
 	while(<CFG>) {
 	    chomp;
@@ -389,7 +389,6 @@ sub get_from_config {
 	    push @browser, $_;
 	}
 	close CFG;
-	$got_from_config++;
 	unshift @unix_browsers, @browser;
     }
 }
