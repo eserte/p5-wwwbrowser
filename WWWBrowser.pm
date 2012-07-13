@@ -27,7 +27,7 @@ $VERSION = 2.48;
 @available_browsers = qw(_debian_browser _internal_htmlview
 			 _default_gnome _default_kde
 			 htmlview
-			 seamonkey mozilla firefox galeon konqueror netscape Netscape kfmclient
+			 firefox seamonkey mozilla galeon konqueror netscape Netscape kfmclient
 			 dillo w3m lynx
 			 mosaic Mosaic
 			 chimera arena tkweb
