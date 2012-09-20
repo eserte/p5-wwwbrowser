@@ -187,7 +187,7 @@ sub start_browser {
 
 sub start_windows_browser_cygwin {
     my($url, %args) = @_;
-    system("cmd", "/c", "start", $url);
+    _system("cmd", "/c", "start", $url);
     if ($? == 0) {
 	return 1;
     } else {
@@ -206,19 +206,19 @@ sub start_browser_windows {
 
     for my $method (@methods) {
         if ($method eq 'rundll') {
-	    system("rundll32 url.dll,FileProtocolHandler \"$url\"");
+	    _system("rundll32 url.dll,FileProtocolHandler \"$url\"");
             if ($?/256 == 0) {
 	        return 1;
 	    }
         } elsif ($method eq 'start') {
 	    # XXX There are reports that "start" and Tk programms
 	    # do not work well together (slow startup and such).
-	    system("start /b \"$url\"");
+	    _system("start /b \"$url\"");
 	    if ($?/256 == 0) {
 		return 1;
 	    }
 	} elsif ($method eq 'explorer') {
-	    system("start explorer \"$url\"");
+	    _system("start explorer \"$url\"");
 	    # maybe: system("start", "explorer", $url);
 	    # or:    system("start explorer \"$url\"");
 	    if ($?/256 == 0) {
@@ -252,13 +252,13 @@ sub open_in_konqueror {
 	    }
 
 	    if (defined $konq_name) {
-		system(qw/dcop konqueror/, $konq_name, qw/openURL/, $url);
+		_system(qw/dcop konqueror/, $konq_name, qw/openURL/, $url);
 		return 1 if ($?/256 == 0);
 	    }
 	}
 
 	# then try to send to running konqueror process:
-	system(qw/dcop konqueror KonquerorIface openBrowserWindow/, $url);
+	_system(qw/dcop konqueror KonquerorIface openBrowserWindow/, $url);
 	return 1 if ($?/256 == 0);
 
 	# otherwise start a new konqueror
@@ -277,7 +277,7 @@ sub open_in_galeon {
 
 	# first try old window (if requested)
 	if ($args{-oldwindow}) {
-	    system("galeon", "-x", $url);
+	    _system("galeon", "-x", $url);
 	    return 1 if ($?/256 == 0);
 	}
 
@@ -292,10 +292,10 @@ sub _open_in_mozilloid {
     my($cmd, $url, %args) = @_;
     if (is_in_path($cmd)) {
 	if ($args{-oldwindow}) {
-	    system($cmd, "-remote", "openURL($url)");
+	    _system($cmd, "-remote", _openurl_cmd($url));
 	} else {
 	    # no new-tab support in older Mozillas (e.g. 1.0)!
-	    system($cmd, "-remote", "openURL($url,new-tab)");
+	    _system($cmd, "-remote", _openurl_cmd($url,"new-tab"));
 	}
 	return 1 if ($?/256 == 0);
 
@@ -330,6 +330,7 @@ sub open_in_opera {
 
 sub exec_bg {
     my(@cmd) = @_;
+    warn "Execute: @cmd\n" if $VERBOSE && $VERBOSE >= 2;
     if ($os eq 'unix' || $os eq 'macosx') {
 	eval {
 	    if (!$fork || fork == 0) {
@@ -344,8 +345,14 @@ sub exec_bg {
 	};
     } else {
 	# XXX use Spawn
-	system(join(" ", @cmd) . ($fork ? "&" : ""));
+	_system(join(" ", @cmd) . ($fork ? "&" : ""));
     }
+}
+
+sub _system {
+    my(@cmd) = @_;
+    warn "Execute: @cmd\n" if $VERBOSE && $VERBOSE >= 2;
+    system @cmd;
 }
 
 sub _get_cmdline_for_url_from_Gnome {
@@ -497,7 +504,7 @@ sub htmlview {
 	if (!defined $ENV{DISPLAY} || $ENV{DISPLAY} eq "") {
 	    for my $ttybrowser (@TTYBROWSERS) {
 		if (is_in_path($ttybrowser)) {
-		    system($ttybrowser, @args); # blocks in tty mode
+		    _system($ttybrowser, @args); # blocks in tty mode
 		    last TRY;
 		}
 	    }
@@ -551,7 +558,7 @@ sub open_in_terminal {
 	}
     } else {
 	# without X11: not in background!
-	system($browser, $url);
+	_system($browser, $url);
 	return 1;
     }
     0;
