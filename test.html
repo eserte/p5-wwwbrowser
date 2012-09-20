@@ -2,7 +2,34 @@
 <html><head>
 <title>Test page</title>
 <link rev=made href="mailto:slaven@rezic.de">
+<script><!--
+function init() {
+  if (document.getElementById) {
+    var jscontent = document.getElementById("jscontent");
+    if (jscontent) {
+      var replacecontent = "";
+      if (location.search) {
+        replacecontent += "Querystring tests:<br/>";
+
+	replacecontent += "comma: ";
+        if (!location.search.match(/(,|%2c)/)) {
+	  replacecontent += "not ";
+        }
+	replacecontent += "ok<br/>\n";
+
+	replacecontent += "closing parens: ";
+        if (!location.search.match(/(\)|%29)/)) {
+	  replacecontent += "not ";
+        }
+	replacecontent += "ok<br/>\n";
+      }
+      jscontent.innerHTML = replacecontent;
+    }
+  }
+}
+//--></script>
 </head>
-<body>
-This is a small html test page for WWWBrowser.pm
+<body onLoad="init()">
+<div>This is a small html test page for WWWBrowser.pm</div>
+<div id="jscontent">This will be replaced by JS (if available and enabled).</div>
 </body></html>

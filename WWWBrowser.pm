@@ -22,7 +22,7 @@ use vars qw(@unix_browsers @available_browsers
 	    $VERSION $VERBOSE $initialized $os $fork
 	    $ignore_config);
 
-$VERSION = 2.49;
+$VERSION = 2.50;
 
 @available_browsers = qw(_debian_browser _internal_htmlview
 			 _default_gnome _default_kde
@@ -129,9 +129,9 @@ sub start_browser {
 		    # Check whether Netscape stills lives:
 		    if (defined $pid && kill 0 => $pid) {
 			if ($args{-oldwindow}) {
-			    exec_bg("netscape", "-remote", "openURL($url)");
+			    exec_bg("netscape", "-remote", _openurl_cmd($url));
 			} else {
-			    exec_bg("netscape", "-remote", "openURL($url,new)");
+			    exec_bg("netscape", "-remote", _openurl_cmd($url,"new"));
 			}
 		        # XXX further options: mailto(to-adresses)
 			# XXX check return code?
@@ -562,6 +562,13 @@ sub open_in_terminal {
 	return 1;
     }
     0;
+}
+
+sub _openurl_cmd {
+    my($url, @args) = @_;
+    $url =~ s{,}{%2c}g; # collides with openURL argument separator
+    $url =~ s{\)}{%29}g; # collides with openURL function end token
+    "openURL($url" . (@args ? "," . join(",", @args) : "") . ")";
 }
 
 # REPO BEGIN

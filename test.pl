@@ -26,6 +26,7 @@ GetOptions("browser=s" => sub {
 	       @WWWBrowser::unix_browsers = $browser;
 	   },
 	   "all!" => \$all,
+	   "v" => sub { $WWWBrowser::VERBOSE = 2 },
 	  )
     or die "usage: $0 [-browser browser]";
 
@@ -35,13 +36,14 @@ if ($all) {
     for my $browser (@WWWBrowser::available_browsers) {
 	local @WWWBrowser::unix_browsers = $browser;
 	print STDERR "*** Try $browser...\n";
-	WWWBrowser::start_browser($local_html_url);
+	WWWBrowser::start_browser($local_html_url."?query=,)");
 	print STDERR "*** Press RETURN to continue...\n";
 	<STDIN>;
     }
 } else {
     if (!$ENV{BATCH}) {
 	WWWBrowser::start_browser($local_html_url);
+	WWWBrowser::start_browser($local_html_url."?query=,)");
     }
 }
 
