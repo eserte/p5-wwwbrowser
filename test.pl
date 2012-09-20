@@ -19,7 +19,6 @@ $WWWBrowser::VERBOSE = 1;
 
 use_ok("WWWBrowser");
 
-my $vran = hostname eq 'vran.herceg.de';
 my $all;
 
 GetOptions("browser=s" => sub {
@@ -27,7 +26,6 @@ GetOptions("browser=s" => sub {
 	       @WWWBrowser::unix_browsers = $browser;
 	   },
 	   "all!" => \$all,
-	   "vran!" => \$vran,
 	  )
     or die "usage: $0 [-browser browser]";
 
@@ -44,10 +42,6 @@ if ($all) {
 } else {
     if (!$ENV{BATCH}) {
 	WWWBrowser::start_browser($local_html_url);
-    }
-
-    if ($vran) {
-	WWWBrowser::start_browser("www.herceg.de", -expandurl => 1);
     }
 }
 
