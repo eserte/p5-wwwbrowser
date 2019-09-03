@@ -112,6 +112,18 @@ sub start_browser {
 	    }
 	} elsif ($browser eq '_default_kde') {
 	    # NYI
+	} elsif ($browser =~ /^_exec\b(.*)/) {
+	    my $cmdline = $1;
+	    $cmdline =~ s/^\s+//;
+	    my @exec_bg_args;
+	    if ($cmdline =~ /\%s/) {
+		@exec_bg_args = sprintf $cmdline, $url;
+	    } else {
+		@exec_bg_args = (split(/\s+/, $cmdline), $url);
+	    }
+	    warn "EXEC: @exec_bg_args"; # XXX make conditional!
+	    exec_bg(@exec_bg_args);
+	    return 1;
 	} elsif ($browser eq 'konqueror') {
 	    return 1 if open_in_konqueror($url, %args);
 	} elsif ($browser eq 'galeon') {
