@@ -32,10 +32,7 @@ jobs:
             os: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        clean: false
-        show-progress: false
+    - uses: taiki-e/checkout-action@v1
 
     - name: Build and test
       run: |
@@ -65,8 +62,7 @@ jobs:
           - image: fedora:40
 
     steps:
-    # Note: checkout@v4 does not work with older debians (e.g.stretch), so do this step *outside* the container
-    - uses: actions/checkout@v4
+    - uses: taiki-e/checkout-action@v1
     - name: Preinstall, Configure, Build and Test
       run: |
         docker run --quiet -v $(pwd):$(pwd) ${{ matrix.image }} sh -c "cd $(pwd); "'
