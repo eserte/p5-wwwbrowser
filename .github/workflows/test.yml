@@ -22,6 +22,8 @@ jobs:
             os: ubuntu-22.04
           - config_name: ubuntu-24.04
             os: ubuntu-24.04
+          - config_name: ubuntu-26.04
+            os: ubuntu-26.04
           - config_name: macos-14
             os: macos-14
           - config_name: macos-15
@@ -53,7 +55,7 @@ jobs:
           - image: perl:5.16.3-buster
           - image: perl:5.18.4-buster
           - image: perl:5.22.4-stretch
-          - image: perl:5.36.0-slim-bullseye
+          - image: perl:5.36.0-buster
           - image: perl:5.38.0-slim-bookworm
           - image: perl:5.40.0-slim-bookworm
           ## use debian:* images only if there's no suitable perl:* image
@@ -84,23 +86,26 @@ jobs:
 
   test_freebsd:
     name: Test on FreeBSD ${{ matrix.osvers }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         include:
           - osvers: '13.5'
-          - osvers: '14.3'
+          - osvers: '14.5'
+          - osvers: '15.1'
+    defaults:
+      run:
+        # cpa.sh is cross-platform-actions/action "magic"
+        shell: 'cpa.sh {0}'
     steps:
-    - uses: actions/checkout@v4
-      with:
-        clean: false
-        show-progress: false
-    - uses: cross-platform-actions/action@v0.29.0
+    - uses: taiki-e/checkout-action@v1
+    - uses: cross-platform-actions/action@v1.6.0
       with:
         operating_system: freebsd
         version: '${{ matrix.osvers }}'
-        run: |
-          sudo pkg update
-          sudo pkg install -y perl5
-          perl Makefile.PL
-          make -j4 all test
+    - name: build and test
+      run: |
+        sudo pkg update
+        sudo pkg install -y perl5
+        perl Makefile.PL
+        make -j4 all test
